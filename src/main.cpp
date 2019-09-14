@@ -12,6 +12,9 @@ const char *ssid = "TURBONETT_1DFD27";
 const char *password = "57E04D255E";
 
 //Variables Principales
+int dataDelay = 1000;//En millisegundos el dato del WebSocket
+int delayFactor = 10;//El porcentaje de dataDelay
+int delayCounter = 0;//En milisegundos la iteracion de cada factor
 uint8_t acelerometroPins[] = {36, 39, 34};
 uint8_t licorPins[] = {35, 32};
 double aceletrometroData[sizeof(acelerometroPins) / sizeof(acelerometroPins[0])];
@@ -68,30 +71,54 @@ void setup() {
 
 void loop() {
   //Recolectar los Datos
-
-  //Variables para almacenar los datos y Responder al WebSocket
-  String text = "";
-  StaticJsonDocument<256> doc;
-  JsonObject root = doc.to<JsonObject>();
   uint8_t s = 0;
 
   //Recolectando datos del acelerometro
   s = sizeof(acelerometroPins) / sizeof(acelerometroPins[0]);
   for(uint8_t i = 0; i < s; i++){
-    aceletrometroData[i] = 0.0;
-    aceletrometroData[i] += analogRead(acelerometroPins[i]);    
-    root["aceletrometro"+String(i)] = aceletrometroData[i];
+    aceletrometroData[i] += analogRead(acelerometroPins[i]);
   }
   //Recolectando datos de la licor
   s = sizeof(licorPins) / sizeof(licorPins[0]);
-  for(uint8_t i = 0; i < s; i++){
-    licorData[i] = 0.0;
+  for(uint8_t i = 0; i < s; i++){    
     licorData[i] += analogRead(licorPins[i]);    
-    root["licor"+String(i)] = licorData[i];
   }
 
-  //Enviar la respuesta por el WebSocket
-  serializeJson(doc, text);
-  ws.textAll(text.c_str());
-  delay(1000);
+  //Aumentar el contador delayCounter para ver si ya es necesario Enviar los datos en relacion al dataDelay y el delayFactor 
+  //Generar un retardo por dato de 10% de dataDelay con delayFactor (1000 / 10) = 100ms
+  delayCounter += (dataDelay/delayFactor);
+  delay(dataDelay/delayFactor);
+  
+
+  //Enviar la respuesta por el WebSocket despues del dataDelay
+  if(delayCounter >= dataDelay){
+    //Variables para almacenar los datos y Responder al WebSocket
+    String text = "";
+    StaticJsonDocument<256> doc;
+    JsonObject root = doc.to<JsonObject>();
+
+    //Recolectando datos del acelerometro
+    s = sizeof(acelerometroPins) / sizeof(acelerometroPins[0]);
+    for(uint8_t i = 0; i < s; i++){
+      //Calcular el promedio de lo recolectado del dataDelay con el delayFactor
+      aceletrometroData[i] = (aceletrometroData[i] / (dataDelay/delayFactor))*10;
+      
+      //Enviar y Vaciar el dato
+      root["aceletrometro"+String(i)] = aceletrometroData[i];
+      aceletrometroData[i] = 0.0;
+    }
+    //Recolectando datos de la licor
+    s = sizeof(licorPins) / sizeof(licorPins[0]);
+    for(uint8_t i = 0; i < s; i++){
+      //Calcular el promedio de lo recolectado del dataDelay con el delayFactor
+      licorData[i] = (licorData[i] / (dataDelay/delayFactor))*10;
+      //Enviar y Vaciar el dato
+      root["licor"+String(i)] = licorData[i];
+      licorData[i] = 0.0;
+    }
+    serializeJson(doc, text);
+    ws.textAll(text.c_str());
+    //Resetear el counter para poder Enviar otra vez la respuesta
+    delayCounter = 0;
+  }  
 }
