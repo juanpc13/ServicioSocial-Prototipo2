@@ -79,21 +79,15 @@ void loop() {
   s = sizeof(acelerometroPins) / sizeof(acelerometroPins[0]);
   for(uint8_t i = 0; i < s; i++){
     aceletrometroData[i] = 0.0;
-    for(uint8_t r = 0; r < 8; r++){
-      aceletrometroData[i] += analogRead(acelerometroPins[i]);
-    }
-    aceletrometroData[i] = (aceletrometroData[i] / 8.0);
-    root["aceletrometro"+String(i)] = (double) aceletrometroData[i];
+    aceletrometroData[i] += analogRead(acelerometroPins[i]);    
+    root["aceletrometro"+String(i)] = aceletrometroData[i];
   }
   //Recolectando datos de la licor
   s = sizeof(licorPins) / sizeof(licorPins[0]);
   for(uint8_t i = 0; i < s; i++){
     licorData[i] = 0.0;
-    for(uint8_t r = 0; r < 8; r++){
-      licorData[i] += analogRead(licorPins[i]);
-    }
-    licorData[i] = (licorData[i] / 8.0);
-    root["licor"+String(i)] = (double) licorData[i];
+    licorData[i] += analogRead(licorPins[i]);    
+    root["licor"+String(i)] = licorData[i];
   }
 
   //Enviar la respuesta por el WebSocket
