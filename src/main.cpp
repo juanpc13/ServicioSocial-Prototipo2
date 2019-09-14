@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <SPIFFS.h>
+#include "RTClib.h"
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 
@@ -21,6 +22,9 @@ double aceletrometroData[sizeof(acelerometroPins) / sizeof(acelerometroPins[0])]
 //Pins y Datos de la licor
 uint8_t licorPins[] = {35, 32};
 double licorData[sizeof(licorPins) / sizeof(licorPins[0])];
+//Reloj
+DateTime now;
+RTC_DS1307 rtc;
 
 //Datos de la RED
 IPAddress local_IP(192, 168, 1, 251);
@@ -69,7 +73,16 @@ void setup() {
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");delay(100);
-  }  
+  }
+  //RTC
+  if (! rtc.begin(33, 25)) {
+    Serial.println("Couldn't find RTC");
+    while (1);
+  }
+  if (! rtc.isrunning()) {
+    Serial.println("RTC is NOT running!");
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));    
+  }
   //Mostrar IP
   Serial.print("IP : ");Serial.println(WiFi.localIP());
   //Server Config
@@ -103,9 +116,14 @@ void loop() {
   //Enviar la respuesta por el WebSocket despues del dataDelay
   if(delayCounter*dataDelay*delayFactor >= dataDelay){
     //Variables para almacenar los datos y Responder al WebSocket
+    now = rtc.now();
     String text = "";
     StaticJsonDocument<256> doc;
     JsonObject root = doc.to<JsonObject>();
+
+    //Recolectar la fecha y hora
+    root["fecha"] = now.timestamp(DateTime::timestampOpt::TIMESTAMP_DATE);
+    root["hora"] = now.timestamp(DateTime::timestampOpt::TIMESTAMP_TIME);
 
     //Recolectando datos del acelerometro
     s = sizeof(acelerometroPins) / sizeof(acelerometroPins[0]);
