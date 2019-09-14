@@ -13,7 +13,7 @@ const char *password = "57E04D255E";
 
 //Variables Principales
 int dataDelay = 1000;//En millisegundos el dato del WebSocket
-double delayFactor = 0.05;//El porcentaje de dataDelay para promediar dato final
+double delayFactor = 0.1;//El porcentaje de dataDelay para promediar dato final
 int delayCounter = 0;//ciclos de la iteracion de cada factor de lectura
 //Pins y Datos del Acelerometro
 uint8_t acelerometroPins[] = {36, 39, 34};
@@ -40,6 +40,14 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     Serial.println("Client Recive Data");    
   }
 
+}
+
+double acelerometroEcuacion(double x){
+  double x1 = 1400.0, y1 = -9.8;
+  double x2 = 2175.0, y2 = 9.8;
+  double y = 0.0;
+  y = ((y2-y1)/(x2-x1))*(x-x1)+y1;
+  return y;
 }
 
 void setup() {
@@ -104,7 +112,7 @@ void loop() {
     for(uint8_t i = 0; i < s; i++){
       //Calcular el promedio de lo recolectado del dataDelay con el delayFactor
       aceletrometroData[i] = (aceletrometroData[i] / delayCounter);
-      
+      aceletrometroData[i] = acelerometroEcuacion(aceletrometroData[i]);
       //Enviar y Vaciar el dato
       root["aceletrometro"+String(i)] = String(aceletrometroData[i], 4);
       aceletrometroData[i] = 0.0;
