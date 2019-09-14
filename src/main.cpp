@@ -13,11 +13,13 @@ const char *password = "57E04D255E";
 
 //Variables Principales
 int dataDelay = 1000;//En millisegundos el dato del WebSocket
-int delayFactor = 10;//El porcentaje de dataDelay
-int delayCounter = 0;//En milisegundos la iteracion de cada factor
+double delayFactor = 0.05;//El porcentaje de dataDelay para promediar dato final
+int delayCounter = 0;//ciclos de la iteracion de cada factor de lectura
+//Pins y Datos del Acelerometro
 uint8_t acelerometroPins[] = {36, 39, 34};
-uint8_t licorPins[] = {35, 32};
 double aceletrometroData[sizeof(acelerometroPins) / sizeof(acelerometroPins[0])];
+//Pins y Datos de la licor
+uint8_t licorPins[] = {35, 32};
 double licorData[sizeof(licorPins) / sizeof(licorPins[0])];
 
 //Datos de la RED
@@ -86,12 +88,12 @@ void loop() {
 
   //Aumentar el contador delayCounter para ver si ya es necesario Enviar los datos en relacion al dataDelay y el delayFactor 
   //Generar un retardo por dato de 10% de dataDelay con delayFactor (1000 / 10) = 100ms
-  delayCounter += (dataDelay/delayFactor);
-  delay(dataDelay/delayFactor);
+  delayCounter ++;
+  delay(dataDelay*delayFactor);
   
 
   //Enviar la respuesta por el WebSocket despues del dataDelay
-  if(delayCounter >= dataDelay){
+  if(delayCounter*dataDelay*delayFactor >= dataDelay){
     //Variables para almacenar los datos y Responder al WebSocket
     String text = "";
     StaticJsonDocument<256> doc;
@@ -101,19 +103,20 @@ void loop() {
     s = sizeof(acelerometroPins) / sizeof(acelerometroPins[0]);
     for(uint8_t i = 0; i < s; i++){
       //Calcular el promedio de lo recolectado del dataDelay con el delayFactor
-      aceletrometroData[i] = (aceletrometroData[i] / (dataDelay/delayFactor))*10;
+      aceletrometroData[i] = (aceletrometroData[i] / delayCounter);
       
       //Enviar y Vaciar el dato
-      root["aceletrometro"+String(i)] = aceletrometroData[i];
+      root["aceletrometro"+String(i)] = String(aceletrometroData[i], 4);
       aceletrometroData[i] = 0.0;
     }
     //Recolectando datos de la licor
     s = sizeof(licorPins) / sizeof(licorPins[0]);
     for(uint8_t i = 0; i < s; i++){
       //Calcular el promedio de lo recolectado del dataDelay con el delayFactor
-      licorData[i] = (licorData[i] / (dataDelay/delayFactor))*10;
+      licorData[i] = (licorData[i] / delayCounter);
+
       //Enviar y Vaciar el dato
-      root["licor"+String(i)] = licorData[i];
+      root["licor"+String(i)] = String(licorData[i], 4);
       licorData[i] = 0.0;
     }
     serializeJson(doc, text);
