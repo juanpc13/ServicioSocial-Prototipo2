@@ -83,8 +83,47 @@ void setup() {
     Serial.println("RTC is NOT running!");
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));    
   }
+  now = rtc.now();
   //Mostrar IP
   Serial.print("IP : ");Serial.println(WiFi.localIP());
+  
+  //Crear archivos con 3 dias de diferencia con las fechas  
+  StaticJsonDocument<256> doc;
+  JsonObject object = doc.to<JsonObject>();
+  JsonArray allowFiles = object.createNestedArray("allowFiles");
+  uint8_t interval = 3;//3dias
+  for (uint8_t i = 0; i < interval; i++)  {
+    //Generar el nombre del archivo con la fecha
+    String filename = "/dataFiles/" + now.timestamp(DateTime::timestampOpt::TIMESTAMP_DATE) +".txt";
+    //Crear o Abrir archivo
+    File f = SPIFFS.open(filename, FILE_WRITE);f.close();
+    //Agregar a los archivos permitidos a la lista
+    allowFiles.add(filename);
+    //Quitamos un dia al tiempoUNIX
+    now = now.unixtime() - (60*60*24);
+  }
+  //Corregir tiempo del intervalo de dias que se restaron del tiempoUnix
+  now = now.unixtime() + (interval)*(60*60*24);
+  //Eliminar archivos que no esten en la lista de archivos permitidos
+  File carpeta = SPIFFS.open("/dataFiles");
+  File file = carpeta.openNextFile();
+  while(file){
+    boolean found = false;
+    for(JsonVariant v : allowFiles) {
+      if(v.as<String>() == file.name()){
+        //Encontrado y salir del loop for
+        found = true;break;
+      }
+    }
+    //Eliminar el archivo si no se encontro
+    if(!found){
+      Serial.println("Eliminando "+ String(file.name()));
+      SPIFFS.remove(file.name());      
+    }
+    //Abrir el siguiente archivo
+    file = carpeta.openNextFile();
+  }
+
   //Server Config
   server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
   ws.onEvent(onWsEvent);
