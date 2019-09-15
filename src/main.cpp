@@ -159,7 +159,7 @@ void loop() {
     //Variables para almacenar los datos y Responder al WebSocket
     lastTime = now;
     now = rtc.now();
-    String text = "";
+    String text = "";//text se ocupa para guardar en formato csv y respuesta json del websocket
     StaticJsonDocument<256> doc;
     JsonObject root = doc.to<JsonObject>();
 
