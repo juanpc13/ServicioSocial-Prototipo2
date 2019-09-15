@@ -24,6 +24,7 @@ uint8_t licorPins[] = {35, 32};
 double licorData[sizeof(licorPins) / sizeof(licorPins[0])];
 //Reloj
 DateTime now;
+DateTime lastTime;
 RTC_DS1307 rtc;
 
 //Datos de la RED
@@ -155,6 +156,7 @@ void loop() {
   //Enviar la respuesta por el WebSocket despues del dataDelay
   if(delayCounter*dataDelay*delayFactor >= dataDelay){
     //Variables para almacenar los datos y Responder al WebSocket
+    lastTime = now;
     now = rtc.now();
     String text = "";
     StaticJsonDocument<256> doc;
@@ -188,5 +190,10 @@ void loop() {
     ws.textAll(text.c_str());
     //Resetear el counter para poder Enviar otra vez la respuesta
     delayCounter = 0;
+
+    //Si alguna de las fechas cambiaron sera necesario reiniciar el dispositivo
+    if(now.year() != lastTime.year() || now.month() != lastTime.month() || now.day() != lastTime.day()){
+      ESP.restart();
+    }
   }  
 }
