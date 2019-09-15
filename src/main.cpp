@@ -97,7 +97,7 @@ void setup() {
     //Generar el nombre del archivo con la fecha
     String filename = "/dataFiles/" + now.timestamp(DateTime::timestampOpt::TIMESTAMP_DATE) +".txt";
     //Crear o Abrir archivo
-    File f = SPIFFS.open(filename, FILE_WRITE);f.close();
+    File f = SPIFFS.open(filename, FILE_APPEND);f.close();
     //Agregar a los archivos permitidos a la lista
     allowFiles.add(filename);
     //Quitamos un dia al tiempoUNIX
@@ -113,6 +113,7 @@ void setup() {
     for(JsonVariant v : allowFiles) {
       if(v.as<String>() == file.name()){
         //Encontrado y salir del loop for
+        Serial.println("OK "+ String(file.name()));
         found = true;break;
       }
     }
@@ -169,7 +170,9 @@ void loop() {
 
     //Recolectar la fecha y hora
     root["fecha"] = now.timestamp(DateTime::timestampOpt::TIMESTAMP_DATE);
+    text += now.timestamp(DateTime::timestampOpt::TIMESTAMP_DATE); text += ',';
     root["hora"] = now.timestamp(DateTime::timestampOpt::TIMESTAMP_TIME);
+    text += now.timestamp(DateTime::timestampOpt::TIMESTAMP_TIME); text += ',';
 
     //Recolectando datos del acelerometro
     s = sizeof(acelerometroPins) / sizeof(acelerometroPins[0]);
@@ -179,6 +182,7 @@ void loop() {
       aceletrometroData[i] = acelerometroEcuacion(aceletrometroData[i]);
       //Enviar y Vaciar el dato
       root["aceletrometro"+String(i)] = String(aceletrometroData[i], 4);
+      text += String(aceletrometroData[i], 4); text += ',';
       aceletrometroData[i] = 0.0;
     }
     //Recolectando datos de la licor
@@ -189,8 +193,22 @@ void loop() {
 
       //Enviar y Vaciar el dato
       root["licor"+String(i)] = String(licorData[i], 4);
+      text += String(licorData[i], 4); //text += ',';
       licorData[i] = 0.0;
     }
+
+    //Guardar el dato en formato CVS en el dia de hoy si ya paso 1 minuto
+    if(now.minute() > lastTime.minute()){
+      String filename = "/dataFiles/" + now.timestamp(DateTime::timestampOpt::TIMESTAMP_DATE) +".txt";      
+      File f = SPIFFS.open(filename, FILE_APPEND);
+      if(!f.println(text)){
+        Serial.println("No se ha podido escribir");
+      }
+      f.close();
+    }
+    //Vaciar el text para poder mandar la respuesta por el websocket
+    text = "";
+
     serializeJson(doc, text);
     ws.textAll(text.c_str());
     //Resetear el counter para poder Enviar otra vez la respuesta
