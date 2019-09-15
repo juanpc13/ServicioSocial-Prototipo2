@@ -197,8 +197,8 @@ void loop() {
       licorData[i] = 0.0;
     }
 
-    //Guardar el dato en formato CVS en el dia de hoy si ya paso 1 minuto
-    if(now.minute() > lastTime.minute()){
+    //Guardar el dato en formato CVS en el dia de hoy si ya paso 1 minuto o no coinciden los minutos
+    if(now.minute() != lastTime.minute() || now.minute() > lastTime.minute()){
       String filename = "/dataFiles/" + now.timestamp(DateTime::timestampOpt::TIMESTAMP_DATE) +".txt";      
       File f = SPIFFS.open(filename, FILE_APPEND);
       if(!f.println(text)){
