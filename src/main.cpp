@@ -162,6 +162,11 @@ void loop() {
     StaticJsonDocument<256> doc;
     JsonObject root = doc.to<JsonObject>();
 
+    //Si alguna de las fechas cambiaron sera necesario reiniciar el dispositivo
+    if(now.year() != lastTime.year() || now.month() != lastTime.month() || now.day() != lastTime.day()){
+      ESP.restart();
+    }
+
     //Recolectar la fecha y hora
     root["fecha"] = now.timestamp(DateTime::timestampOpt::TIMESTAMP_DATE);
     root["hora"] = now.timestamp(DateTime::timestampOpt::TIMESTAMP_TIME);
@@ -190,10 +195,5 @@ void loop() {
     ws.textAll(text.c_str());
     //Resetear el counter para poder Enviar otra vez la respuesta
     delayCounter = 0;
-
-    //Si alguna de las fechas cambiaron sera necesario reiniciar el dispositivo
-    if(now.year() != lastTime.year() || now.month() != lastTime.month() || now.day() != lastTime.day()){
-      ESP.restart();
-    }
   }  
 }
