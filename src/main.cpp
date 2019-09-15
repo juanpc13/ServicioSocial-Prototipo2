@@ -26,6 +26,10 @@ double licorData[sizeof(licorPins) / sizeof(licorPins[0])];
 DateTime now;
 DateTime lastTime;
 RTC_DS1307 rtc;
+//Archivos se creo porque el websocket tarda demasiado en responder
+//Porque toma tiempo para buscarlos en la memoria SPIFFS 
+//Esta variable permite la SOLUCION TEMPORAL
+String archivos = "";
 
 //Datos de la RED
 IPAddress local_IP(192, 168, 1, 251);
@@ -39,6 +43,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 
   if(type == WS_EVT_CONNECT){
     Serial.println("Client connected");
+    client->text(archivos.c_str());
   } else if(type == WS_EVT_DISCONNECT){
     Serial.println("Client disconnected");
   } else if(type == WS_EVT_DATA){
@@ -125,6 +130,8 @@ void setup() {
     //Abrir el siguiente archivo
     file = carpeta.openNextFile();
   }
+  //Agregar a la variable archivos para responder por el websocket
+  serializeJson(doc, archivos);
 
   //Server Config
   server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
@@ -213,5 +220,5 @@ void loop() {
     ws.textAll(text.c_str());
     //Resetear el counter para poder Enviar otra vez la respuesta
     delayCounter = 0;
-  }  
+  }
 }

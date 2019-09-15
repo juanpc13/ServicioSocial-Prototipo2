@@ -1,4 +1,5 @@
 var table = document.getElementById("table");
+var filesDiv = document.getElementById("filesDiv");
 var ws;
 
 function connect() {
@@ -10,6 +11,20 @@ function connect() {
 
     ws.onmessage = function (evt) {
         var json = JSON.parse(evt.data);
+        if(typeof json["allowFiles"] !== 'undefined'){
+            filesDiv.innerHTML = "";
+            json["allowFiles"].forEach(element => {
+                console.log(element);
+                let a = document.createElement("a");
+                let br = document.createElement("br");
+                a.href = element;
+                a.download = true;
+                a.innerText = element.split("/")[2];
+                filesDiv.appendChild(a);
+                filesDiv.appendChild(br);
+            });            
+            return;
+        }
         var keys = Object.keys(json);
         var row = table.insertRow(1);
         
