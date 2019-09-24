@@ -29,7 +29,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="z">
 		<type name="double precision" length="0"/>
 	</column>
-	<column name="date_time">
+	<column name="date_time" default-value="Now()">
 		<type name="timestamptz" length="0"/>
 	</column>
 	<constraint name="acelerometro_pk" type="pk-constr" table="public.acelerometro">
@@ -52,6 +52,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="activo">
 		<type name="boolean" length="0"/>
 	</column>
+	<column name="date_time" default-value="Now()">
+		<type name="timestamptz" length="0"/>
+	</column>
 	<constraint name="dispositivo_pk" type="pk-constr" table="public.dispositivo">
 		<columns names="id_dispositivo" ref-type="src-columns"/>
 	</constraint>
@@ -69,7 +72,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="ppm">
 		<type name="double precision" length="0"/>
 	</column>
-	<column name="date_time">
+	<column name="date_time" default-value="Now()">
 		<type name="timestamptz" length="0"/>
 	</column>
 	<constraint name="co2_pk" type="pk-constr" table="public.co2">
@@ -89,7 +92,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="rh">
 		<type name="double precision" length="0"/>
 	</column>
-	<column name="date_time">
+	<column name="date_time" default-value="Now()">
 		<type name="timestamptz" length="0"/>
 	</column>
 	<constraint name="co2_pk" type="pk-constr" table="public.h2o">

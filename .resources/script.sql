@@ -21,7 +21,7 @@ CREATE TABLE public.acelerometro(
 	x double precision,
 	y double precision,
 	z double precision,
-	date_time timestamptz,
+	date_time timestamptz DEFAULT Now(),
 	CONSTRAINT acelerometro_pk PRIMARY KEY (id_acelerometro)
 
 );
@@ -34,6 +34,7 @@ CREATE TABLE public.dispositivo(
 	nombre character varying(64),
 	mac text,
 	activo boolean,
+	date_time timestamptz DEFAULT Now(),
 	CONSTRAINT dispositivo_pk PRIMARY KEY (id_dispositivo)
 
 );
@@ -45,7 +46,7 @@ CREATE TABLE public.co2(
 	id_co2 serial NOT NULL,
 	id_dispositivo integer,
 	ppm double precision,
-	date_time timestamptz,
+	date_time timestamptz DEFAULT Now(),
 	CONSTRAINT co2_pk PRIMARY KEY (id_co2)
 
 );
@@ -57,7 +58,7 @@ CREATE TABLE public.h2o(
 	id_h2o serial NOT NULL,
 	id_dispositivo integer,
 	rh double precision,
-	date_time timestamptz,
+	date_time timestamptz DEFAULT Now(),
 	CONSTRAINT co2_pk PRIMARY KEY (id_h2o)
 
 );
