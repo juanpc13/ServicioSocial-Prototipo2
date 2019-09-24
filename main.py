@@ -1,9 +1,29 @@
 import time
 import ubinascii
+from machine import Pin, ADC
 import lib.Micropg.micropg as micropg
 
+#Variables del Sistema
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
 conn = micropg.connect(host='35.235.111.68', user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
+
+#Variables de pines
+licorPins = [ADC(Pin(35)), ADC(Pin(32))]
+acelerometroPins = [ADC(Pin(36)), ADC(Pin(39)), ADC(Pin(34))]
+
+#Modificando el Rango Maximo de 3.3V
+#Licor Pins
+i = 0
+for p in licorPins:
+	p.atten(ADC.ATTN_11DB)
+	print("licorPin",i,"=",p.read())
+	i += 1
+#Acelerometro Pins
+i = 0
+for p in acelerometroPins:
+	p.atten(ADC.ATTN_11DB)
+	print("acelerometroPin",i,"=",p.read())
+	i += 1
 
 #Verificar este dispositivo
 id_dispositivo = None
