@@ -20,7 +20,7 @@ for p in acelerometroPins:
 	p.atten(ADC.ATTN_11DB)
 
 #Ecuacion para Acelerometro
-def acelerometroEcuacion(x):
+def acelerometroConversion(x):
   x1 = 1400.0
   y1 = -9.8
   x2 = 2175.0
@@ -28,6 +28,16 @@ def acelerometroEcuacion(x):
   y = 0.0
   y = ((y2-y1)/(x2-x1))*(x-x1)+y1
   return y
+
+def sendQuery(conn, query):
+	if conn.is_connect():
+		cur = conn.cursor()		
+		cur.execute(query)
+		conn.commit()
+		print("SEND:",query)
+	else:
+		print("No Conectado")
+
 
 #Verificar este dispositivo
 id_dispositivo = None
@@ -65,21 +75,21 @@ while id_dispositivo is not None:
 
 	#Recoleccion de los datos
 	#Datos Acelerometro
-	#Datos CO2 y rH
-		
+	query = "INSERT INTO acelerometro(id_dispositivo, x, y, z) VALUES(?,?,?,?)"
+	query = query.replace('?',str(id_dispositivo), 1)
+	for p in acelerometroPins:
+		aceleracion = acelerometroConversion(p.read())
+		query = query.replace('?',str(aceleracion), 1)
 	#Envio de los datos
-	if conn.is_connect():
-		cur = conn.cursor()
-		query = "INSERT INTO acelerometro(id_dispositivo, x, y, z) VALUES(?,?,?,?)"
-		query = query.replace('?',str(id_dispositivo), 1)
-		for p in acelerometroPins:
-			aceleracion = acelerometroEcuacion(p.read())
-			query = query.replace('?',str(aceleracion), 1)
-		cur.execute(query)
-		conn.commit()
-		print(query)
-	else:
-		print("No Conectado")
+	sendQuery(conn, query)
+
+	#Datos CO2 y rH
+	query = "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?)"
+	query = query.replace('?',str(id_dispositivo), 1)
+	ppm = licorPins[0].read()
+	query = query.replace('?',str(ppm), 1)
+	#Envio de los datos
+	sendQuery(conn, query)
 
 	#Delay de 1 segundo
 	time.sleep(1)
