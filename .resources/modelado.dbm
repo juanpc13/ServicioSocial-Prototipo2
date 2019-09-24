@@ -13,7 +13,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 <table name="acelerometro" hide-ext-attribs="true">
 	<schema name="public"/>
-	<role name="postgres"/>
 	<position x="0" y="200"/>
 	<column name="id_acelerometro" not-null="true">
 		<type name="serial" length="0"/>
@@ -30,8 +29,8 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="z">
 		<type name="double precision" length="0"/>
 	</column>
-	<column name="fecha">
-		<type name="date" length="0"/>
+	<column name="date_time">
+		<type name="timestamptz" length="0"/>
 	</column>
 	<constraint name="acelerometro_pk" type="pk-constr" table="public.acelerometro">
 		<columns names="id_acelerometro" ref-type="src-columns"/>
@@ -40,7 +39,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 <table name="dispositivo" hide-ext-attribs="true">
 	<schema name="public"/>
-	<role name="postgres"/>
 	<position x="440" y="260"/>
 	<column name="id_dispositivo" not-null="true">
 		<type name="serial" length="0"/>
@@ -61,7 +59,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 <table name="co2" hide-ext-attribs="true">
 	<schema name="public"/>
-	<role name="postgres"/>
 	<position x="920" y="160"/>
 	<column name="id_co2" not-null="true">
 		<type name="serial" length="0"/>
@@ -72,8 +69,8 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="ppm">
 		<type name="double precision" length="0"/>
 	</column>
-	<column name="fecha">
-		<type name="date" length="0"/>
+	<column name="date_time">
+		<type name="timestamptz" length="0"/>
 	</column>
 	<constraint name="co2_pk" type="pk-constr" table="public.co2">
 		<columns names="id_co2" ref-type="src-columns"/>
@@ -82,7 +79,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 <table name="h2o" hide-ext-attribs="true">
 	<schema name="public"/>
-	<role name="postgres"/>
 	<position x="920" y="360"/>
 	<column name="id_h2o" not-null="true">
 		<type name="serial" length="0"/>
@@ -93,8 +89,8 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="rh">
 		<type name="double precision" length="0"/>
 	</column>
-	<column name="fecha">
-		<type name="date" length="0"/>
+	<column name="date_time">
+		<type name="timestamptz" length="0"/>
 	</column>
 	<constraint name="co2_pk" type="pk-constr" table="public.h2o">
 		<columns names="id_h2o" ref-type="src-columns"/>

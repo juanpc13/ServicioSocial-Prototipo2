@@ -23,6 +23,10 @@ while conn.is_connect() and id_dispositivo is not None:
 
 	if conn.is_connect():
 		cur = conn.cursor()
+		'''
+		SET TIMEZONE='America/El_Salvador';
+		SELECT NOW();
+		'''
 		cur.execute('select * from acelerometro')
 		for r in cur.fetchall():
    			print("Data is : ",r[0], r[1], r[2], r[3], r[4])
