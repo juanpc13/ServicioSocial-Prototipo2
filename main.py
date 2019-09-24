@@ -13,17 +13,21 @@ acelerometroPins = [ADC(Pin(36)), ADC(Pin(39)), ADC(Pin(34))]
 
 #Modificando el Rango Maximo de 3.3V
 #Licor Pins
-i = 0
 for p in licorPins:
-	p.atten(ADC.ATTN_11DB)
-	print("licorPin",i,"=",p.read())
-	i += 1
+	p.atten(ADC.ATTN_11DB)	
 #Acelerometro Pins
-i = 0
 for p in acelerometroPins:
 	p.atten(ADC.ATTN_11DB)
-	print("acelerometroPin",i,"=",p.read())
-	i += 1
+
+#Ecuacion para Acelerometro
+def acelerometroEcuacion(x):
+  x1 = 1400.0
+  y1 = -9.8
+  x2 = 2175.0
+  y2 = 9.8
+  y = 0.0
+  y = ((y2-y1)/(x2-x1))*(x-x1)+y1
+  return y
 
 #Verificar este dispositivo
 id_dispositivo = None
@@ -66,10 +70,14 @@ while id_dispositivo is not None:
 	#Envio de los datos
 	if conn.is_connect():
 		cur = conn.cursor()
-		cur.execute('select * from acelerometro')
-		print("Data is : ")
-		for r in cur.fetchall():
-   			print(r[0], r[1], r[2], r[3], r[4])
+		query = "INSERT INTO acelerometro(id_dispositivo, x, y, z) VALUES(?,?,?,?)"
+		query = query.replace('?',str(id_dispositivo), 1)
+		for p in acelerometroPins:
+			aceleracion = acelerometroEcuacion(p.read())
+			query = query.replace('?',str(aceleracion), 1)
+		cur.execute(query)
+		conn.commit()
+		print(query)
 	else:
 		print("No Conectado")
 
