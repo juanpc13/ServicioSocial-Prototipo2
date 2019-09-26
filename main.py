@@ -5,7 +5,7 @@ import lib.Micropg.micropg as micropg
 
 #Variables del Sistema
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
-conn = micropg.connect(host='35.235.111.68', user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
+conn = micropg.connect(host='192.168.1.251', user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
 
 #Variables de pines
 licorPins = [ADC(Pin(35)), ADC(Pin(32))]

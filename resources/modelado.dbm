@@ -5,7 +5,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 -->
 <dbmodel pgmodeler-ver="0.9.1" last-position="0,0" last-zoom="1"
 	 default-schema="public" default-owner="postgres">
-<database name="new_database" is-template="false" allow-conns="true">
+<database name="prototipo2" is-template="false" allow-conns="true">
 </database>
 
 <schema name="public" fill-color="#e1e1e1" sql-disabled="true">
