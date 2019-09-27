@@ -7,8 +7,14 @@ import lib.Micropg.micropg as micropg
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
 conn = micropg.connect(host='192.168.1.251', user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
 
-#Variables de pines
+#Licor Variable
+licorCounter = 0 # Contador de la licor
+licorDelay = 60*10 # 10 Minutos
+licorStart = 60*8 # Encender en el minuto 8
+licorCollectData = 60*9 # Recolectar datos desde el minuto 9
+licorPower = Pin(2, Pin.OUT)
 licorPins = [ADC(Pin(35)), ADC(Pin(32))]
+#Acelerometro Variable
 acelerometroPins = [ADC(Pin(36)), ADC(Pin(39)), ADC(Pin(34))]
 
 #Modificando el Rango Maximo de 3.3V
@@ -83,16 +89,37 @@ while id_dispositivo is not None:
 	#Envio de los datos
 	sendQuery(conn, query)
 
-	#Datos CO2 y rH
-	query = "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?)"
-	query = query.replace('?',str(id_dispositivo), 1)
-	ppm = licorPins[0].read()
-	query = query.replace('?',str(ppm), 1)
-	#Envio de los datos
-	sendQuery(conn, query)
+	# Verificar si es necesario en Encender la licor
+	if licorCounter >= licorStart:
+		licorPower.on()
+		# Esperar a que caliente la licor
+		if licorCounter >= licorCollectData:
+			#Datos CO2
+			query = "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?)"
+			query = query.replace('?',str(id_dispositivo), 1)
+			value = licorPins[0].read()
+			query = query.replace('?',str(value), 1)
+			#Envio de los datos
+			sendQuery(conn, query)
+
+			#Datos rH
+			query = "INSERT INTO h2o(id_dispositivo, rh) VALUES(?,?)"
+			query = query.replace('?',str(id_dispositivo), 1)
+			value = licorPins[1].read()
+			query = query.replace('?',str(value), 1)
+			#Envio de los datos
+			sendQuery(conn, query)			
+	else:
+		licorPower.off()
+	
 
 	#Delay de 1 segundo
 	time.sleep(1)
+	#Aumentar el Contador de la licor y verificar reinicio 
+	licorCounter += 1
+	if licorCounter > licorDelay:
+		licorCounter = 0
+		print("Reiniciando licorCounter")
 
 print("Cerrando Conexion")
 conn.close()

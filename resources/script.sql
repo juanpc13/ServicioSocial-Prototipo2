@@ -7,9 +7,9 @@
 
 -- Database creation must be done outside a multicommand file.
 -- These commands were put in this file only as a convenience.
--- -- object: new_database | type: DATABASE --
--- -- DROP DATABASE IF EXISTS new_database;
--- CREATE DATABASE new_database;
+-- -- object: prototipo2 | type: DATABASE --
+-- -- DROP DATABASE IF EXISTS prototipo2;
+-- CREATE DATABASE prototipo2;
 -- -- ddl-end --
 -- 
 
@@ -21,7 +21,7 @@ CREATE TABLE public.acelerometro(
 	x double precision,
 	y double precision,
 	z double precision,
-	date_time timestamptz DEFAULT Now(),
+	date_time timestamp DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT acelerometro_pk PRIMARY KEY (id_acelerometro)
 
 );
@@ -34,7 +34,7 @@ CREATE TABLE public.dispositivo(
 	nombre character varying(64),
 	mac text,
 	activo boolean,
-	date_time timestamptz DEFAULT Now(),
+	date_time timestamp DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT dispositivo_pk PRIMARY KEY (id_dispositivo)
 
 );
@@ -46,7 +46,7 @@ CREATE TABLE public.co2(
 	id_co2 serial NOT NULL,
 	id_dispositivo integer,
 	ppm double precision,
-	date_time timestamptz DEFAULT Now(),
+	date_time timestamp DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT co2_pk PRIMARY KEY (id_co2)
 
 );
@@ -58,8 +58,8 @@ CREATE TABLE public.h2o(
 	id_h2o serial NOT NULL,
 	id_dispositivo integer,
 	rh double precision,
-	date_time timestamptz DEFAULT Now(),
-	CONSTRAINT co2_pk PRIMARY KEY (id_h2o)
+	date_time timestamp DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT h2o_pk PRIMARY KEY (id_h2o)
 
 );
 -- ddl-end --
