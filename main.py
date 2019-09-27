@@ -5,13 +5,13 @@ import lib.Micropg.micropg as micropg
 
 #Variables del Sistema
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
-conn = micropg.connect(host='192.168.1.251', user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
+conn = micropg.connect(host='35.235.111.68', port=1000,user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
 
 #Licor Variable
-licorCounter = 0 # Contador de la licor
-licorDelay = 60*10 # 10 Minutos
-licorStart = 60*8 # Encender en el minuto 8
-licorCollectData = 60*9 # Recolectar datos desde el minuto 9
+licorCounter = 0 # Contador de la licor en segundos
+licorStart = 60*8 # Encender en el minuto 8 y expresarlo en segundos
+licorCollectData = 60*9 # Recolectar datos desde el minuto 9 y expresarlo en segundos
+licorDelay = 60*10 # 10 Minutos totales para cada dato y expresarlo en segundos
 licorPower = Pin(2, Pin.OUT)
 licorPins = [ADC(Pin(35)), ADC(Pin(32))]
 #Acelerometro Variable
@@ -36,14 +36,10 @@ def acelerometroConversion(x):
   return y
 
 def sendQuery(conn, query):
-	if conn.is_connect():
-		cur = conn.cursor()		
-		cur.execute(query)
-		conn.commit()
-		print("SEND:",query)
-	else:
-		print("No Conectado")
-
+	cur = conn.cursor()		
+	cur.execute(query)
+	conn.commit()
+	print("SEND:",query)
 
 #Verificar este dispositivo
 id_dispositivo = None
@@ -79,15 +75,14 @@ else:
 #Recolectar los datos y enviarlos
 while id_dispositivo is not None:
 
-	#Recoleccion de los datos
+	#Recoleccion de los datos	
+	query = "" #Vaciar Query
 	#Datos Acelerometro
-	query = "INSERT INTO acelerometro(id_dispositivo, x, y, z) VALUES(?,?,?,?)"
+	query += "INSERT INTO acelerometro(id_dispositivo, x, y, z) VALUES(?,?,?,?);"
 	query = query.replace('?',str(id_dispositivo), 1)
 	for p in acelerometroPins:
 		aceleracion = acelerometroConversion(p.read())
 		query = query.replace('?',str(aceleracion), 1)
-	#Envio de los datos
-	sendQuery(conn, query)
 
 	# Verificar si es necesario en Encender la licor
 	if licorCounter >= licorStart:
@@ -95,31 +90,28 @@ while id_dispositivo is not None:
 		# Esperar a que caliente la licor
 		if licorCounter >= licorCollectData:
 			#Datos CO2
-			query = "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?)"
+			query += "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?);"
 			query = query.replace('?',str(id_dispositivo), 1)
 			value = licorPins[0].read()
 			query = query.replace('?',str(value), 1)
-			#Envio de los datos
-			sendQuery(conn, query)
 
 			#Datos rH
-			query = "INSERT INTO h2o(id_dispositivo, rh) VALUES(?,?)"
+			query += "INSERT INTO h2o(id_dispositivo, rh) VALUES(?,?);"
 			query = query.replace('?',str(id_dispositivo), 1)
 			value = licorPins[1].read()
-			query = query.replace('?',str(value), 1)
-			#Envio de los datos
-			sendQuery(conn, query)			
+			query = query.replace('?',str(value), 1)			
 	else:
-		licorPower.off()
-	
+		licorPower.off()	
 
-	#Delay de 1 segundo
-	time.sleep(1)
+	#Envio de los datos
+	sendQuery(conn, query)
 	#Aumentar el Contador de la licor y verificar reinicio 
 	licorCounter += 1
 	if licorCounter > licorDelay:
 		licorCounter = 0
 		print("Reiniciando licorCounter")
+	#Delay de 1 segundo
+	time.sleep(1)
 
 print("Cerrando Conexion")
 conn.close()
