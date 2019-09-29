@@ -101,6 +101,7 @@ def prototipo2():
 	if id_dispositivo is not None:
 		#Recoleccion de los datos	
 		query = "" #Vaciar Query
+		query += "SET TIMEZONE='America/El_Salvador';"
 		#Datos Acelerometro
 		query += "INSERT INTO acelerometro(id_dispositivo, x, y, z) VALUES(?,?,?,?);"
 		query = query.replace('?',str(id_dispositivo), 1)
