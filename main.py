@@ -1,4 +1,6 @@
+from machine import Timer
 import time
+import machine
 import ubinascii
 from machine import Pin, ADC
 import lib.Micropg.micropg as micropg
@@ -6,6 +8,8 @@ import lib.Micropg.micropg as micropg
 #Variables del Sistema
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
 conn = micropg.connect(host='35.235.111.68', port=1000,user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
+#Variables del timmer para mejor presicion del tiempo
+tim = Timer(-1)
 
 #Licor Variable
 licorCounter = 0 # Contador de la licor en segundos
@@ -54,87 +58,99 @@ def constrain(value, min, max):
 	return value
 
 def sendQuery(conn, query):
-	cur = conn.cursor()		
-	cur.execute(query)
-	conn.commit()
-	print("SEND:",query)
+	try:
+		cur = conn.cursor()		
+		cur.execute(query)
+		conn.commit()
+		print("SEND:",query)
+	except:
+		machine.reset()
 
-#Verificar este dispositivo
+#Dispositivo
 id_dispositivo = None
-if conn.is_connect():
-	#Buscar
+#Buscar
+def findDevice(mac):
+	id = None
 	cur = conn.cursor()
 	cur.execute("SELECT d.id_dispositivo FROM dispositivo as d WHERE d.mac='"+mac+"'")
-	id_dispositivo = cur.fetchone()
+	id = cur.fetchone()
+	if id is not None:
+		id = id[0]
+		print("idDispositivo: ",id)
+	return id
+
+#Registrar
+def registerDevice(mac):
+	id = None
+	print("Registrando Dispositivo")
+	cur = conn.cursor()
+	cur.execute("INSERT INTO dispositivo(nombre, mac, activo) VALUES('Prototipo2', '"+mac+"', true)")
+	conn.commit()
+	cur.execute("SELECT d.id_dispositivo FROM dispositivo as d WHERE d.mac='"+mac+"'")
+	id = cur.fetchone()
+	if id is not None:
+		id = id[0]
+		print("idDispositivo: ", id)
+	return id		
+
+def prototipo2():	
+	#Recolectar los datos y enviarlos
+	global conn
+	global licorCounter
+	global id_dispositivo
 	if id_dispositivo is not None:
-		id_dispositivo = id_dispositivo[0]
-		print("idDispositivo: ",id_dispositivo)
+		#Recoleccion de los datos	
+		query = "" #Vaciar Query
+		#Datos Acelerometro
+		query += "INSERT INTO acelerometro(id_dispositivo, x, y, z) VALUES(?,?,?,?);"
+		query = query.replace('?',str(id_dispositivo), 1)
+		for p in acelerometroPins:
+			aceleracion = acelerometroConversion(p.read())
+			query = query.replace('?',str(aceleracion), 1)
+		# Verificar si es necesario en Encender la licor		
+		if licorCounter <= licorStop:
+			licorPower.on()
+			# Esperar a que caliente la licor
+			if licorCounter >= licorCollectData:
+				#Datos CO2
+				query += "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?);"
+				query = query.replace('?',str(id_dispositivo), 1)
+				value = licorPins[0].read()
+				value = map(value, 745, 3722, 0, 20000)
+				value = constrain(value, 0, 20000)
+				query = query.replace('?',str(value), 1)
 
-	#Registrar
-	if id_dispositivo is None:
-		print("Dispositivo no encontrado, Se registrara")
-		cur = conn.cursor()
-		cur.execute("INSERT INTO dispositivo(nombre, mac, activo) VALUES('Prototipo2', '"+mac+"', true)")
-		conn.commit()
-		cur.execute("SELECT d.id_dispositivo FROM dispositivo as d WHERE d.mac='"+mac+"'")
-		id_dispositivo = cur.fetchone()
-		if id_dispositivo is not None:
-			id_dispositivo = id_dispositivo[0]
-			print("idDispositivo: ", id_dispositivo)
+				#Datos rH
+				query += "INSERT INTO h2o(id_dispositivo, rh) VALUES(?,?);"
+				query = query.replace('?',str(id_dispositivo), 1)
+				value = licorPins[1].read()
+				value = map(value, 745, 3722, 0, 60)
+				value = constrain(value, 0, 60)
+				query = query.replace('?',str(value), 1)
 		else:
-			print("Error no se puede Registar... Reiniciando")			
-			time.sleep(3)
-			machine.reset()
-else:
-	print("No Conectado... Reiniciando")	
-	time.sleep(3)
-	machine.reset()
+			licorPower.off()
 
-#Recolectar los datos y enviarlos
-while id_dispositivo is not None:
+		#Envio de los datos		
+		sendQuery(conn, query)
+		#Aumentar el Contador de la licor y verificar reinicio 
+		licorCounter += 1
+		if licorCounter > licorDelay:
+			licorCounter = 0
+			print("Reiniciando licorCounter")
 
-	#Recoleccion de los datos	
-	query = "" #Vaciar Query
-	#Datos Acelerometro
-	query += "INSERT INTO acelerometro(id_dispositivo, x, y, z) VALUES(?,?,?,?);"
-	query = query.replace('?',str(id_dispositivo), 1)
-	for p in acelerometroPins:
-		aceleracion = acelerometroConversion(p.read())
-		query = query.replace('?',str(aceleracion), 1)
-
-	# Verificar si es necesario en Encender la licor
-	if licorCounter <= licorStop:
-		licorPower.on()
-		# Esperar a que caliente la licor
-		if licorCounter >= licorCollectData:
-			#Datos CO2
-			query += "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?);"
-			query = query.replace('?',str(id_dispositivo), 1)
-			value = licorPins[0].read()
-			value = map(value, 745, 3722, 0, 20000)
-			value = constrain(value, 0, 20000)
-			query = query.replace('?',str(value), 1)
-
-			#Datos rH
-			query += "INSERT INTO h2o(id_dispositivo, rh) VALUES(?,?);"
-			query = query.replace('?',str(id_dispositivo), 1)
-			value = licorPins[1].read()
-			value = map(value, 745, 3722, 0, 60)
-			value = constrain(value, 0, 60)
-			query = query.replace('?',str(value), 1)
 	else:
-		licorPower.off()
+		print("idDispositivo No Definido")
+		if conn is None:
+			time.sleep(5)
+			machine.reset()
+		elif id_dispositivo is None:
+			#Buscar ID del dispositivo
+			id_dispositivo = findDevice(mac)			
+			if id_dispositivo is None:
+				#Registrar el Dispositivo
+				id_dispositivo = registerDevice(mac)
+				if id_dispositivo is None:
+					print("No se puede registrar")
 
-	#Envio de los datos
-	sendQuery(conn, query)
-	#Aumentar el Contador de la licor y verificar reinicio 
-	licorCounter += 1
-	if licorCounter > licorDelay:
-		licorCounter = 0
-		print("Reiniciando licorCounter")
-	#Delay de 1 segundo
-	# 900ms para aproximar a 1 segundo con el retardo del servidor
-	time.sleep_ms(900)
 
-print("Cerrando Conexion")
-conn.close()
+tim.init(period=1000, mode=Timer.PERIODIC, callback=lambda t:prototipo2())
