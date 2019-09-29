@@ -9,9 +9,9 @@ conn = micropg.connect(host='35.235.111.68', port=1000,user='postgres', password
 
 #Licor Variable
 licorCounter = 0 # Contador de la licor en segundos
-licorStart = 60*7 # Encender en el minuto 7 y expresarlo en segundos
-licorCollectData = 60*8 # Recolectar datos desde el minuto 8 y expresarlo en segundos
-licorDelay = 60*10 # 10 Minutos totales para cada dato y expresarlo en segundos
+licorStop = 60*12 # Apagar en el minuto 12 y expresarlo en segundos
+licorCollectData = 60*2 # Recolectar datos desde el minuto 2 y expresarlo en segundos
+licorDelay = 60*60 # 60 Minutos totales para cada dato y expresarlo en segundos
 licorPower = Pin(13, Pin.OUT)
 licorPins = [ADC(Pin(35)), ADC(Pin(32))]
 #Acelerometro Variable
@@ -103,7 +103,7 @@ while id_dispositivo is not None:
 		query = query.replace('?',str(aceleracion), 1)
 
 	# Verificar si es necesario en Encender la licor
-	if licorCounter >= licorStart:
+	if licorCounter <= licorStop:
 		licorPower.on()
 		# Esperar a que caliente la licor
 		if licorCounter >= licorCollectData:
@@ -133,7 +133,8 @@ while id_dispositivo is not None:
 		licorCounter = 0
 		print("Reiniciando licorCounter")
 	#Delay de 1 segundo
-	time.sleep(1)
+	# 900ms para aproximar a 1 segundo con el retardo del servidor
+	time.sleep_ms(900)
 
 print("Cerrando Conexion")
 conn.close()
