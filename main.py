@@ -5,7 +5,7 @@ import lib.Micropg.micropg as micropg
 
 #Variables del Sistema
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
-conn = micropg.connect(host='35.235.111.68', port=1000,user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
+conn = micropg.connect(host='34.70.49.21', port=1000,user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
 
 #Licor Variable
 licorCounter = 0 # Contador de la licor en segundos
