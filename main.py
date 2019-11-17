@@ -2,11 +2,16 @@ import time
 import ubinascii
 from machine import Pin, ADC, I2C
 import lib.Micropg.micropg as micropg
-import lib.ADS.ads1x15
+import lib.ADS.ads1x15 as ads1x15
 
 #Variables del Sistema
 i2c = I2C(scl=Pin(4), sda=Pin(2), freq=400000)
-ads = ads1x15.ADS1115(i2c, address=0x48, gain=2)
+adsAdd = 0x48
+ads = None
+#Verificar que existe el ADS
+if adsAdd in i2c.scan():
+	ads = ads1x15.ADS1115(i2c, address=0x48, gain=2)
+
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
 conn = micropg.connect(host='34.70.49.21', port=1000,user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
 
@@ -103,8 +108,14 @@ while id_dispositivo is not None:
 	#Datos Acelerometro
 	query += "INSERT INTO acelerometro(id_dispositivo, x, y, z) VALUES(?,?,?,?);"
 	query = query.replace('?',str(id_dispositivo), 1)
+	i = 0
 	for p in acelerometroPins:
-		aceleracion = acelerometroConversion(p.read())
+		aceleracion = 0.0
+		if ads is not None:
+			aceleracion = acelerometroConversion(adsRead(i))
+		else:
+			aceleracion = acelerometroConversion(p.read())
+		i += 1
 		query = query.replace('?',str(aceleracion), 1)
 
 	# Verificar si es necesario en Encender la licor
