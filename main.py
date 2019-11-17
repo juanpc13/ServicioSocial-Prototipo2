@@ -89,9 +89,16 @@ def registerDevice(mac):
 	if id is not None:
 		id = id[0]
 		print("idDispositivo: ", id)
-	return id		
+	return id
 
-def prototipo2():	
+def loopData():
+	while True:
+		x = map((adsRead(0)), 20700.0, 30700.0, -9.8, 9.8)
+		y = map((adsRead(0)), 20700.0, 30700.0, -9.8, 9.8)
+		z = map((adsRead(0)), 20700.0, 30700.0, -9.8, 9.8)
+		print(x, ' ', y, ' ', z)
+
+def prototipo2():
 	#Recolectar los datos y enviarlos
 	global conn
 	global licorCounter
@@ -111,7 +118,7 @@ def prototipo2():
 			else:
 				aceleracion = map((p.read()), 1400.0, 2175.0, -9.8, 9.8)
 			i += 1
-			query = query.replace('?',str(aceleracion), 1)
+			query = query.replace('?', '{:.8f}'.format(aceleracion), 1)
 		# Verificar si es necesario en Encender la licor		
 		if licorCounter <= licorStop:
 			licorPower.on()
