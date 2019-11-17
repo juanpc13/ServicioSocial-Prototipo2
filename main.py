@@ -1,9 +1,12 @@
 import time
 import ubinascii
-from machine import Pin, ADC
+from machine import Pin, ADC, I2C
 import lib.Micropg.micropg as micropg
+import lib.ADS.ads1x15
 
 #Variables del Sistema
+i2c = I2C(scl=Pin(4), sda=Pin(2), freq=400000)
+ads = ads1x15.ADS1115(i2c, address=0x48, gain=2)
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
 conn = micropg.connect(host='34.70.49.21', port=1000,user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
 
@@ -20,11 +23,13 @@ acelerometroPins = [ADC(Pin(36)), ADC(Pin(39)), ADC(Pin(34))]
 #Modificando el Rango Maximo de 3.3V
 #Licor Pins
 for p in licorPins:
-	p.atten(ADC.ATTN_11DB)	
+	p.atten(ADC.ATTN_11DB)
 #Acelerometro Pins
 for p in acelerometroPins:
 	p.atten(ADC.ATTN_11DB)
-
+#ADS115 leer por pin
+def adsRead(pin):
+	return ads.read(channel1=pin)
 #Ecuacion para Acelerometro
 def acelerometroConversion(x):
 	x1 = 1400.0
@@ -39,10 +44,8 @@ def map(value, leftMin, leftMax, rightMin, rightMax):
 	# Figure out how 'wide' each range is
     leftSpan = leftMax - leftMin
     rightSpan = rightMax - rightMin
-
     # Convert the left range into a 0-1 range (float)
     valueScaled = float(value - leftMin) / float(leftSpan)
-
     # Convert the 0-1 range into a value in the right range.
     return rightMin + (valueScaled * rightSpan)
 
