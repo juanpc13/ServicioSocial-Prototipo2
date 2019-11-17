@@ -40,15 +40,6 @@ for p in acelerometroPins:
 #ADS115 leer por pin
 def adsRead(pin):
 	return ads.read(channel1=pin)
-#Ecuacion para Acelerometro
-def acelerometroConversion(x):
-	x1 = 1400.0
-	y1 = -9.8
-	x2 = 2175.0
-	y2 = 9.8
-	y = 0.0
-	y = ((y2-y1)/(x2-x1))*(x-x1)+y1
-	return y
 
 def map(value, leftMin, leftMax, rightMin, rightMax):
 	# Figure out how 'wide' each range is
@@ -116,9 +107,9 @@ def prototipo2():
 		for p in acelerometroPins:
 			aceleracion = 0.0
 			if ads is not None:
-				aceleracion = acelerometroConversion(adsRead(i))
+				aceleracion = map((adsRead(i)), 20700.0, 30700.0, -9.8, 9.8)
 			else:
-				aceleracion = acelerometroConversion(p.read())
+				aceleracion = map((p.read()), 1400.0, 2175.0, -9.8, 9.8)
 			i += 1
 			query = query.replace('?',str(aceleracion), 1)
 		# Verificar si es necesario en Encender la licor		
@@ -145,7 +136,8 @@ def prototipo2():
 			licorPower.off()
 
 		#Envio de los datos		
-		sendQuery(conn, query)		
+		sendQuery(conn, query)
+		#print(query)
 		#Aumentar el Contador de la licor y verificar reinicio 
 		licorCounter += 1
 		if licorCounter > licorDelay:
