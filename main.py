@@ -94,11 +94,11 @@ def registerDevice(mac):
 		print("idDispositivo: ", id)
 	return id
 
-def loopData():
+def loopRaw():
 	while True:
-		x = map((adsRead(0)), 20700.0, 30700.0, -9.8, 9.8)
-		y = map((adsRead(0)), 20700.0, 30700.0, -9.8, 9.8)
-		z = map((adsRead(0)), 20700.0, 30700.0, -9.8, 9.8)
+		x = adsRead(0)
+		y = adsRead(1)
+		z = adsRead(2)
 		print(x, ' ', y, ' ', z)
 
 def prototipo2():
@@ -117,7 +117,7 @@ def prototipo2():
 		for p in acelerometroPins:
 			aceleracion = 0.0
 			if ads is not None:
-				aceleracion = map((adsRead(i)), 20700.0, 30700.0, -9.8, 9.8)
+				aceleracion = map((adsRead(i)), 20600.0, 30600.0, -9.8, 9.8)
 			else:
 				aceleracion = map((p.read()), 1400.0, 2175.0, -9.8, 9.8)
 			i += 1
