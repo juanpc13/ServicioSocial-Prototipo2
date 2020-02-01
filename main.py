@@ -1,43 +1,31 @@
 from machine import Timer
-import time
+import ujson
 import machine
 import ubinascii
-from machine import Pin, ADC, I2C
+from machine import Pin, I2C
 import lib.Micropg.micropg as micropg
 import lib.ADS.ads1x15 as ads1x15
 
 #Variables del Sistema
 id_dispositivo = None
-i2c = I2C(scl=Pin(4), sda=Pin(2), freq=400000)
+i2c = I2C(scl=Pin(22), sda=Pin(21), freq=400000)
 adsAdd = 0x48
 ads = None
 #Verificar que existe el ADS
 if adsAdd in i2c.scan():
+	print("Direccion 0x48 Encontrada")
 	ads = ads1x15.ADS1115(i2c, address=0x48, gain=2)
+	print("Modulo Declarado")
+#Cargar datos de calibracion
+f = open("calibration.json")
+calibration = ujson.loads(f.read())
+f.close()
 
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
 conn = micropg.connect(host='34.70.49.21', port=1000,user='postgres', password='Cal15!', database='prototipo2', use_ssl=False)
 #Variables del timmer para mejor presicion del tiempo
 tim = Timer(-1)
 
-#Licor Variable
-licorCounter = 0 # Contador de la licor en segundos
-licorStop = 60*12 # Apagar en el minuto 12 y expresarlo en segundos
-licorCollectData = 60*2 # Recolectar datos desde el minuto 2 y expresarlo en segundos
-licorDelay = 60*60 # 60 Minutos totales para cada dato y expresarlo en segundos
-licorPower = Pin(13, Pin.OUT)
-licorPins = [ADC(Pin(35)), ADC(Pin(32))]
-#Acelerometro Variable
-acelerometroPins = [ADC(Pin(36)), ADC(Pin(39)), ADC(Pin(34))]
-
-#Modificando el Rango Maximo de 3.3V
-#Licor Pins
-for p in licorPins:
-	p.atten(ADC.ATTN_11DB)
-#Acelerometro Pins
-for p in acelerometroPins:
-	p.atten(ADC.ATTN_11DB)
-#ADS115 leer por pin
 def adsRead(pin):
 	# Samples per second
 	# 4 _DR_1600SPS,  1600/128
@@ -83,7 +71,6 @@ def findDevice(mac):
 #Registrar
 def registerDevice(mac):
 	id = None
-	print("Registrando Dispositivo")
 	cur = conn.cursor()
 	cur.execute("INSERT INTO dispositivo(nombre, mac, activo) VALUES('Prototipo2', '"+mac+"', true)")
 	conn.commit()
@@ -91,7 +78,6 @@ def registerDevice(mac):
 	id = cur.fetchone()
 	if id is not None:
 		id = id[0]
-		print("idDispositivo: ", id)
 	return id
 
 def loopRaw():
@@ -104,69 +90,51 @@ def loopRaw():
 def prototipo2():
 	#Recolectar los datos y enviarlos
 	global conn
-	global licorCounter
 	global id_dispositivo
-	if id_dispositivo is not None:
+	if id_dispositivo is not None and ads is not None:
 		#Recoleccion de los datos	
 		query = "" #Vaciar Query
 		query += "SET TIMEZONE='America/El_Salvador';"
 		#Datos Acelerometro
 		query += "INSERT INTO acelerometro(id_dispositivo, x, y, z) VALUES(?,?,?,?);"
 		query = query.replace('?',str(id_dispositivo), 1)
+		
+		#Iterador de los 3 EJES(X, Y y Z)
 		i = 0
-		for p in acelerometroPins:
-			aceleracion = 0.0
-			if ads is not None:
-				aceleracion = map((adsRead(i)), 20600.0, 30600.0, -9.8, 9.8)
-			else:
-				aceleracion = map((p.read()), 1400.0, 2175.0, -9.8, 9.8)
+		while i < 3:
 			i += 1
-			query = query.replace('?', '{:.8f}'.format(aceleracion), 1)
-		# Verificar si es necesario en Encender la licor		
-		if licorCounter <= licorStop:
-			licorPower.on()
-			# Esperar a que caliente la licor
-			if licorCounter >= licorCollectData:
-				#Datos CO2
-				query += "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?);"
-				query = query.replace('?',str(id_dispositivo), 1)
-				value = licorPins[0].read()
-				value = map(value, 745, 3722, 0, 20000)
-				value = constrain(value, 0, 20000)
-				query = query.replace('?',str(value), 1)
+		#Obtener Datos de X corresponde a A0 del ADS en posicion 0
+		aceleracion = 0.0
+		aceleracion = map((adsRead(0)), calibration["xVOL1"], calibration["xVOL2"], calibration["xACE1"], calibration["xACE2"])
+		query = query.replace('?', '{:.8f}'.format(aceleracion), 1)
 
-				#Datos rH
-				query += "INSERT INTO h2o(id_dispositivo, rh) VALUES(?,?);"
-				query = query.replace('?',str(id_dispositivo), 1)
-				value = licorPins[1].read()
-				value = map(value, 745, 3722, 0, 60)
-				value = constrain(value, 0, 60)
-				query = query.replace('?',str(value), 1)
-		else:
-			licorPower.off()
+		#Obtener Datos de Y corresponde a A1 del ADS en posicion 1
+		aceleracion = 0.0
+		aceleracion = map((adsRead(1)), calibration["yVOL1"], calibration["yVOL2"], calibration["yACE1"], calibration["yACE2"])
+		query = query.replace('?', '{:.8f}'.format(aceleracion), 1)
 
-		#Envio de los datos		
+		#Obtener Datos de Z corresponde a A2 del ADS en posicion 2
+		aceleracion = 0.0
+		aceleracion = map((adsRead(2)), calibration["zVOL1"], calibration["zVOL2"], calibration["zACE1"], calibration["zACE2"])
+		query = query.replace('?', '{:.8f}'.format(aceleracion), 1)
+		
+		#Envio de los datos
 		sendQuery(conn, query)
-		#print(query)
-		#Aumentar el Contador de la licor y verificar reinicio 
-		licorCounter += 1
-		if licorCounter > licorDelay:
-			licorCounter = 0
-			print("Reiniciando licorCounter")
-
-	else:
+		
+	elif id_dispositivo is None:
 		print("idDispositivo No Definido")
-		if conn is None:
-			time.sleep(5)
-			machine.reset()
-		elif id_dispositivo is None:
-			#Buscar ID del dispositivo
-			id_dispositivo = findDevice(mac)			
-			if id_dispositivo is None:
-				#Registrar el Dispositivo
-				id_dispositivo = registerDevice(mac)
-				if id_dispositivo is None:
-					print("No se puede registrar")
+		#Buscar ID del dispositivo
+		id_dispositivo = findDevice(mac)
+		if id_dispositivo is None:
+			#Registrar el Dispositivo
+			print("Registrando Dispositivo")
+			id_dispositivo = registerDevice(mac)
+			if id_dispositivo is not None:
+				print("idDispositivo: ", id_dispositivo)
+			else:
+				print("No se puedo registrar")
 
+	elif ads is None:
+		print("Modulo ADS no ha sido encontrado")
 
 tim.init(period=1000, mode=Timer.PERIODIC, callback=lambda t:prototipo2())
