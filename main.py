@@ -96,7 +96,7 @@ def prototipo2():
 		query = "" #Vaciar Query
 		query += "SET TIMEZONE='America/El_Salvador';"
 		#Datos Acelerometro
-		query += "INSERT INTO acelerometro(id_dispositivo, x, y, z) VALUES(?,?,?,?);"
+		query += "INSERT INTO acelerometro(id_dispositivo,x,y,z) VALUES(?,?,?,?);"
 		query = query.replace('?',str(id_dispositivo), 1)
 		
 		#Iterador de los 3 EJES(X, Y y Z)
