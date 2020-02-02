@@ -1,4 +1,5 @@
 from machine import Timer
+import time
 import ujson
 import machine
 import ubinascii
@@ -7,6 +8,8 @@ import lib.Micropg.micropg as micropg
 import lib.ADS.ads1x15 as ads1x15
 
 #Variables del Sistema
+led = Pin(2, Pin.OUT)
+led.off()
 id_dispositivo = None
 i2c = I2C(scl=Pin(22), sda=Pin(21), freq=400000)
 adsAdd = 0x48
@@ -48,14 +51,22 @@ def constrain(value, min, max):
 		value = max
 	return value
 
+def rebootDelayMessage(delaySeconds, message):
+	print(message)
+	led.off()
+	time.sleep(delaySeconds)
+	machine.reset()
+
 def sendQuery(conn, query):
 	try:
+		led.on()
 		cur = conn.cursor()		
 		cur.execute(query)
 		conn.commit()
 		print("SEND:",query)
+		led.off()
 	except:
-		machine.reset()
+		rebootDelayMessage(2, "Fallo al enviar QUERY...Reiniciando")
 
 #Buscar
 def findDevice(mac):
@@ -132,9 +143,9 @@ def prototipo2():
 			if id_dispositivo is not None:
 				print("idDispositivo: ", id_dispositivo)
 			else:
-				print("No se puedo registrar")
+				rebootDelayMessage(2, "No se puedo registrar dispositivo...Reiniciando")
 
 	elif ads is None:
-		print("Modulo ADS no ha sido encontrado")
+		rebootDelayMessage(2, "Modulo ADS no ha sido encontrado...Reiniciando")
 
 tim.init(period=1000, mode=Timer.PERIODIC, callback=lambda t:prototipo2())
