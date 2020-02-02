@@ -32,8 +32,12 @@ tim = Timer(-1)
 def adsRead(pin):
 	# Samples per second
 	# 4 _DR_1600SPS,  1600/128
-	# 5 _DR_2400SPS,  2400/250 
-	return ads.read(rate=5, channel1=pin)
+	# 5 _DR_2400SPS,  2400/250
+	try:
+		return ads.read(rate=5, channel1=pin)
+	except:
+		rebootDelayMessage(2, "Fallo al leer Modulo ADS...Reiniciando")
+		return 0.0
 
 def map(value, leftMin, leftMax, rightMin, rightMax):
 	# Figure out how 'wide' each range is
