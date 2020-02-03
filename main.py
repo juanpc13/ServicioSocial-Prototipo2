@@ -100,7 +100,8 @@ def loopRaw():
 		x = adsRead(0)
 		y = adsRead(1)
 		z = adsRead(2)
-		print(x, ' ', y, ' ', z)
+		ppm = adsRead(3)
+		print(x, ' ', y, ' ', z, ' ', ppm)
 
 def prototipo2():
 	#Recolectar los datos y enviarlos
@@ -132,6 +133,14 @@ def prototipo2():
 		aceleracion = 0.0
 		aceleracion = map((adsRead(2)), calibration["zVOL1"], calibration["zVOL2"], calibration["zACE1"], calibration["zACE2"])
 		query = query.replace('?', '{:.8f}'.format(aceleracion), 1)
+
+		#Datos CO2
+		ppm = 0.0
+		query += "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?);"
+		query = query.replace('?',str(id_dispositivo), 1)
+		ppm = map((adsRead(2)), calibration["dragerVOL1"], calibration["dragerVOL2"], calibration["dragerPPM1"], calibration["dragerPPM2"])
+		query = query.replace('?', '{:.8f}'.format(ppm), 1)
+
 		
 		#Envio de los datos
 		sendQuery(conn, query)

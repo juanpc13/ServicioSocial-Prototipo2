@@ -8,6 +8,6 @@
     "zVOL1": 21071.0, "zVOL2": 31372.0,
     "zACE1": -9.8, "zACE2": 9.8,
 
-    "dragerVOL1": 1000.0, "dragerVOL2": 60000.0,
+    "dragerVOL1": 6436.0, "dragerVOL2": 32767.0,
     "dragerPPM1": 400.0, "dragerPPM2": 9990.0
 }
