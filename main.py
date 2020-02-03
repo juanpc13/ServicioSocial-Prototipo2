@@ -134,11 +134,11 @@ def prototipo2():
 		aceleracion = map((adsRead(2)), calibration["zVOL1"], calibration["zVOL2"], calibration["zACE1"], calibration["zACE2"])
 		query = query.replace('?', '{:.8f}'.format(aceleracion), 1)
 
-		#Datos CO2
+		#Datos CO2 Corresponde al pin A3 del ADS en posicion 3
 		ppm = 0.0
 		query += "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?);"
 		query = query.replace('?',str(id_dispositivo), 1)
-		ppm = map((adsRead(2)), calibration["dragerVOL1"], calibration["dragerVOL2"], calibration["dragerPPM1"], calibration["dragerPPM2"])
+		ppm = map((adsRead(3)), calibration["dragerVOL1"], calibration["dragerVOL2"], calibration["dragerPPM1"], calibration["dragerPPM2"])
 		query = query.replace('?', '{:.8f}'.format(ppm), 1)
 
 		

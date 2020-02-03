@@ -1,9 +1,9 @@
 # This file is executed on every boot (including wake-boot from deepsleep)
 import esp
 esp.osdebug(None)
-#import webrepl
-#webrepl.start()
-#webrepl.start(password='')
+import webrepl
+webrepl.start()
+webrepl.start(password='12345678')
 
 import network
 sta_if = network.WLAN(network.STA_IF)
