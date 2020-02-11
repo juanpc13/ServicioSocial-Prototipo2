@@ -14,6 +14,13 @@ id_dispositivo = None
 i2c = I2C(scl=Pin(22), sda=Pin(21), freq=400000)
 adsAdd = 0x48
 ads = None
+#Drager Sensor
+dragerPin = Pin(4, Pin.OUT)
+dragerPin.off()
+dragerSeconds = 0    # contador para mantener encendia la drager
+dragerStart = 120    # recolectar datos apartir del minuto 2
+dragerStop = 720     # apagar apartir del minuto 12
+dragerReboot = 3600  # reiniciar ciclo despues 1 hora
 #Verificar que existe el ADS
 if adsAdd in i2c.scan():
 	print("Direccion 0x48 Encontrada")
@@ -64,7 +71,7 @@ def rebootDelayMessage(delaySeconds, message):
 def sendQuery(conn, query):
 	try:
 		led.on()
-		cur = conn.cursor()		
+		cur = conn.cursor()
 		cur.execute(query)
 		conn.commit()
 		print("SEND:",query)
@@ -105,16 +112,17 @@ def loopRaw():
 
 def prototipo2():
 	#Recolectar los datos y enviarlos
-	global conn
-	global id_dispositivo
+	global conn, id_dispositivo
+	global dragerSeconds, dragerStart, dragerStop, dragerPin, dragerReboot
+
 	if id_dispositivo is not None and ads is not None:
-		#Recoleccion de los datos	
+		#Recoleccion de los datos
 		query = "" #Vaciar Query
 		query += "SET TIMEZONE='America/El_Salvador';"
 		#Datos Acelerometro
 		query += "INSERT INTO acelerometro(id_dispositivo,x,y,z) VALUES(?,?,?,?);"
 		query = query.replace('?',str(id_dispositivo), 1)
-		
+
 		#Iterador de los 3 EJES(X, Y y Z)
 		i = 0
 		while i < 3:
@@ -134,17 +142,29 @@ def prototipo2():
 		aceleracion = map((adsRead(2)), calibration["zVOL1"], calibration["zVOL2"], calibration["zACE1"], calibration["zACE2"])
 		query = query.replace('?', '{:.8f}'.format(aceleracion), 1)
 
-		#Datos CO2 Corresponde al pin A3 del ADS en posicion 3
-		ppm = 0.0
-		query += "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?);"
-		query = query.replace('?',str(id_dispositivo), 1)
-		ppm = map((adsRead(3)), calibration["dragerVOL1"], calibration["dragerVOL2"], calibration["dragerPPM1"], calibration["dragerPPM2"])
-		query = query.replace('?', '{:.8f}'.format(ppm), 1)
+		if dragerSeconds >= 0 and dragerSeconds < dragerStart:
+			dragerPin.on()
 
-		
+		elif dragerSeconds >= dragerStart and dragerSeconds < dragerStop:
+			dragerPin.on()
+			#Datos CO2 Corresponde al pin A3 del ADS en posicion 3
+			ppm = 0.0
+			query += "INSERT INTO co2(id_dispositivo, ppm) VALUES(?,?);"
+			query = query.replace('?',str(id_dispositivo), 1)
+			ppm = map((adsRead(3)), calibration["dragerVOL1"], calibration["dragerVOL2"], calibration["dragerPPM1"], calibration["dragerPPM2"])
+			query = query.replace('?', '{:.8f}'.format(ppm), 1)
+
+		elif dragerSeconds >= dragerStop and dragerSeconds < dragerReboot:
+			dragerPin.off()
+
+		else:
+			dragerSeconds = 0
+			dragerPin.off()
+
 		#Envio de los datos
 		sendQuery(conn, query)
-		
+		dragerSeconds += 1
+
 	elif id_dispositivo is None:
 		print("idDispositivo No Definido")
 		#Buscar ID del dispositivo
