@@ -65,6 +65,7 @@ def constrain(value, min, max):
 def rebootDelayMessage(delaySeconds, message):
 	print(message)
 	led.off()
+	dragerPin.off()
 	time.sleep(delaySeconds)
 	machine.reset()
 
@@ -129,17 +130,18 @@ def prototipo2():
 			i += 1
 		#Obtener Datos de X corresponde a A0 del ADS en posicion 0
 		aceleracion = 0.0
-		aceleracion = map((adsRead(0)), calibration["xVOL1"], calibration["xVOL2"], calibration["xACE1"], calibration["xACE2"])
+		aceleracion = map((adsRead(1)), calibration["xVOL1"], calibration["xVOL2"], calibration["xACE1"], calibration["xACE2"])
+		aceleracion = (aceleracion) * (-1)
 		query = query.replace('?', '{:.8f}'.format(aceleracion), 1)
 
 		#Obtener Datos de Y corresponde a A1 del ADS en posicion 1
 		aceleracion = 0.0
-		aceleracion = map((adsRead(1)), calibration["yVOL1"], calibration["yVOL2"], calibration["yACE1"], calibration["yACE2"])
+		aceleracion = map((adsRead(2)), calibration["yVOL1"], calibration["yVOL2"], calibration["yACE1"], calibration["yACE2"])
 		query = query.replace('?', '{:.8f}'.format(aceleracion), 1)
 
 		#Obtener Datos de Z corresponde a A2 del ADS en posicion 2
 		aceleracion = 0.0
-		aceleracion = map((adsRead(2)), calibration["zVOL1"], calibration["zVOL2"], calibration["zACE1"], calibration["zACE2"])
+		aceleracion = map((adsRead(0)), calibration["zVOL1"], calibration["zVOL2"], calibration["zACE1"], calibration["zACE2"])
 		query = query.replace('?', '{:.8f}'.format(aceleracion), 1)
 
 		if dragerSeconds >= 0 and dragerSeconds < dragerStart:

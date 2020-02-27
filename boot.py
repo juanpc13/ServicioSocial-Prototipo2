@@ -14,8 +14,9 @@ def do_connect():
         sta_if.active(True)
         #sta_if.ifconfig(('192.168.1.251','255.255.255.0','192.168.1.1','8.8.8.8'))
         sta_if.connect('TURBONETT_1DFD27', '57E04D255E')
-        while not sta_if.isconnected():
+        if not sta_if.isconnected():
             pass
+        machine.reset()
     print('network config:', sta_if.ifconfig())
 
 do_connect()
